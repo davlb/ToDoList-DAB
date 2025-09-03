@@ -43,7 +43,7 @@ export default function Home() {
         />
         <button
           onClick={handleAdd}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="addbutton"
         >
           Add
         </button>
@@ -61,7 +61,7 @@ export default function Home() {
             </span>
             <button
               onClick={() => handleToggle(todo.id, todo.completed)}
-              className="text-sm bg-gray-200 px-2 py-1 rounded"
+              className="completebtn"
             >
               {todo.completed ? "Undo" : "Complete"}
             </button>
