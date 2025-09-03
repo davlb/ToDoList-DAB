@@ -44,3 +44,16 @@ export async function updateTodo(id, newTitle) {
   if (error) throw error;
   return data;
 }
+
+// Add this function
+export async function saveAiOutput(id, enhancedTitle, aiOutput) {
+  const { data, error } = await supabase
+    .from("todos")
+    .update({ enhanced_title: enhancedTitle, ai_output: aiOutput })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
