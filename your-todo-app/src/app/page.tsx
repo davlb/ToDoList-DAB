@@ -133,30 +133,6 @@ export default function Home() {
           </li>
         ))}
       </ul>
-      
-      {/* Add some styles for the buttons */}
-      <style jsx>{`
-        .addbutton {
-          background-color: #3b82f6;
-          color: white;
-          padding: 0.5rem 1rem;
-          border-radius: 0.25rem;
-          transition: background-color 0.2s;
-        }
-        .addbutton:hover {
-          background-color: #2563eb;
-        }
-        .completebtn {
-          background-color: #e5e7eb;
-          padding: 0.25rem 0.5rem;
-          border-radius: 0.25rem;
-          font-size: 0.875rem;
-          transition: background-color 0.2s;
-        }
-        .completebtn:hover {
-          background-color: #d1d5db;
-        }
-      `}</style>
     </main>
   );
 }
