@@ -32,12 +32,15 @@ export async function toggleTodo(id, completed) {
 }
 
 // Edit task
-export async function updateTodo(id, fields) {
+// Add this function to your lib/todo.js
+export async function updateTodo(id, newTitle) {
   const { data, error } = await supabase
-    .from("todos")
-    .update(fields)
-    .eq("id", id)
-    .select();
+    .from('todos')
+    .update({ title: newTitle })
+    .eq('id', id)
+    .select()
+    .single();
+
   if (error) throw error;
-  return data[0];
+  return data;
 }
