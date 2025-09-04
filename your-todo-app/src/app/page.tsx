@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getTodos, addTodo, toggleTodo, saveAiOutput } from "../../lib/todo";
+import { getTodos, addTodo, toggleTodo, saveAiOutput, deleteTodo } from "../../lib/todo";
 
 type Todo = {
   id: string;
@@ -57,8 +57,22 @@ export default function Home() {
     }
   }
 
+  async function handleDelete(id: string) {
+    try {
+      await deleteTodo(id);
+      setTodos((prev) => prev.filter((t) => t.id !== id)); // remove from UI
+    } catch (err) {
+      setError("Failed to delete todo");
+      console.error(err);
+    }
+  }
+
   async function askAi(todo: Todo) {
-    const userPrompt = prompt[todo.id] || todo.description || `Generate a detailed task output using only this title: ${todo.title}`; // default empty string
+    const userPrompt =
+      prompt[todo.id] ||
+      todo.description ||
+      `Generate a detailed task output using only this title: ${todo.title}`;
+
     setLoadingId(todo.id);
     setError(null);
 
@@ -74,14 +88,11 @@ export default function Home() {
         }),
       });
 
-
-
       console.log("Sending to AI:", {
         title: todo.title,
         description: todo.description,
-        prompt: prompt[todo.id] || todo.description || "Enhance this task using the title only",
+        prompt: userPrompt,
       });
-
 
       if (!res.ok) {
         throw new Error(`API error: ${res.status}`);
@@ -90,12 +101,8 @@ export default function Home() {
       const data = await res.json();
       console.log("n8n response raw:", data);
 
-
-      // Check for raw n8n expressions
       if (data.enhancedTitle && data.enhancedTitle.includes("{$json")) {
-        throw new Error(
-          "n8n configuration error - returned template expressions instead of values"
-        );
+        throw new Error("n8n configuration error - returned template expressions instead of values");
       }
 
       await saveAiOutput(todo.id, data.enhancedTitle, data.output);
@@ -112,8 +119,6 @@ export default function Home() {
     }
   }
 
-
-
   return (
     <main className="p-6 max-w-2xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-foreground">To-Do List with AI Helper</h1>
@@ -121,17 +126,11 @@ export default function Home() {
       {error && (
         <div className="error-message">
           {error}
-          <button
-            onClick={() => setError(null)}
-            className="error-close-btn"
-          >
+          <button onClick={() => setError(null)} className="error-close-btn">
             ×
           </button>
         </div>
-
       )}
-
-
 
       {/* Add Task */}
       <div className="flex flex-col gap-2">
@@ -147,7 +146,9 @@ export default function Home() {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
-        <button onClick={handleAdd} className="addbutton">Add</button>
+        <button onClick={handleAdd} className="addbutton">
+          Add
+        </button>
       </div>
 
       {/* Tasks */}
@@ -158,12 +159,20 @@ export default function Home() {
               <span className={todo.completed ? "todo-text completed" : "todo-text"}>
                 {todo.enhanced_title || todo.title}
               </span>
-              <button
-                onClick={() => handleToggle(todo.id, todo.completed)}
-                className="completebtn"
-              >
-                {todo.completed ? "Undo" : "Complete"}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleToggle(todo.id, todo.completed)}
+                  className="completebtn"
+                >
+                  {todo.completed ? "Undo" : "Complete"}
+                </button>
+                <button
+                  onClick={() => handleDelete(todo.id)}
+                  className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
 
             {/* Original title if enhanced exists */}
@@ -177,9 +186,7 @@ export default function Home() {
                 className="ai-textarea"
                 placeholder="Ask AI for enhancement suggestions..."
                 value={prompt[todo.id] || ""}
-                onChange={(e) =>
-                  setPrompt((p) => ({ ...p, [todo.id]: e.target.value }))
-                }
+                onChange={(e) => setPrompt((p) => ({ ...p, [todo.id]: e.target.value }))}
               />
               <button
                 onClick={() => askAi(todo)}

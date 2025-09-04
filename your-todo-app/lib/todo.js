@@ -56,4 +56,15 @@ export async function saveAiOutput(id, enhancedTitle, aiOutput) {
 
   if (error) throw error;
   return data;
+  
+}
+// Delete task
+export async function deleteTodo(id) {
+  const { error } = await supabase
+    .from("todos")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+  return true;
 }
