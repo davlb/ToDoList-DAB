@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { getTodos, addTodo, toggleTodo, saveAiOutput, deleteTodo } from "../../lib/todo";
 
@@ -20,53 +19,59 @@ export default function Home() {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Load todos on mount
   useEffect(() => {
-    loadTodos();
+    async function load() {
+      try {
+        const data = await getTodos();
+        setTodos(data as Todo[]);
+      } catch (err) {
+        setError("Failed to load todos");
+        console.error(err);
+      }
+    }
+    load();
   }, []);
 
-  async function loadTodos() {
-    try {
-      const data = await getTodos();
-      setTodos(data as Todo[]);
-    } catch (err) {
-      setError("Failed to load todos");
-      console.error(err);
-    }
-  }
-
+  // Add Todo
   async function handleAdd() {
     if (!title) return;
     try {
       await addTodo(title, description || "");
       setTitle("");
       setDescription("");
-      loadTodos();
+      const data = await getTodos();
+      setTodos(data as Todo[]);
     } catch (err) {
       setError("Failed to add todo");
       console.error(err);
     }
   }
 
+  // Toggle Todo
   async function handleToggle(id: string, completed: boolean) {
     try {
       await toggleTodo(id, !completed);
-      loadTodos();
+      const data = await getTodos();
+      setTodos(data as Todo[]);
     } catch (err) {
       setError("Failed to update todo");
       console.error(err);
     }
   }
 
+  // Delete Todo
   async function handleDelete(id: string) {
     try {
       await deleteTodo(id);
-      setTodos((prev) => prev.filter((t) => t.id !== id)); // remove from UI
+      setTodos((prev) => prev.filter((t) => t.id !== id));
     } catch (err) {
       setError("Failed to delete todo");
       console.error(err);
     }
   }
 
+  // Ask AI
   async function askAi(todo: Todo) {
     const userPrompt =
       prompt[todo.id] ||
@@ -88,31 +93,23 @@ export default function Home() {
         }),
       });
 
-      console.log("Sending to AI:", {
-        title: todo.title,
-        description: todo.description,
-        prompt: userPrompt,
-      });
-
-      if (!res.ok) {
-        throw new Error(`API error: ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
 
       const data = await res.json();
-      console.log("n8n response raw:", data);
 
       if (data.enhancedTitle && data.enhancedTitle.includes("{$json")) {
-        throw new Error("n8n configuration error - returned template expressions instead of values");
+        throw new Error("n8n returned template expressions instead of values");
       }
 
       await saveAiOutput(todo.id, data.enhancedTitle, data.output);
-      await loadTodos();
+      const todosData = await getTodos();
+      setTodos(todosData as Todo[]);
     } catch (err) {
       console.error("AI request failed:", err);
       setError(
         typeof err === "object" && err !== null && "message" in err
           ? String((err as { message?: unknown }).message)
-          : "AI request failed. Please check the console for details."
+          : "AI request failed. Check console for details."
       );
     } finally {
       setLoadingId(null);
@@ -160,10 +157,7 @@ export default function Home() {
                 {todo.enhanced_title || todo.title}
               </span>
               <div className="flex gap-2">
-                <button
-                  onClick={() => handleToggle(todo.id, todo.completed)}
-                  className="completebtn"
-                >
+                <button onClick={() => handleToggle(todo.id, todo.completed)} className="completebtn">
                   {todo.completed ? "Undo" : "Complete"}
                 </button>
                 <button
@@ -175,7 +169,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Original title if enhanced exists */}
             {todo.enhanced_title && todo.enhanced_title !== todo.title && (
               <p className="original-todo">Original: {todo.title}</p>
             )}
