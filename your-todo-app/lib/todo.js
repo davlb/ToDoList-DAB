@@ -1,6 +1,5 @@
-import { supabase } from "./supabaseClient";
+import { supabase } from './supabaseClient';
 
-// Get all tasks
 export async function getTodos() {
   const { data, error } = await supabase
     .from("todos")
